@@ -9,8 +9,8 @@ BLACK = (0,0,0)
 RED = (255,0,0)
 YELLOW = (255,255,0)
 
-ROW_COUNT = 6
-COLUMN_COUNT = 7
+ROW_COUNT = 10
+COLUMN_COUNT = 10
 
 def create_board():
 	board = np.zeros((ROW_COUNT,COLUMN_COUNT))
@@ -92,6 +92,7 @@ pygame.display.update()
 
 myfont = pygame.font.SysFont("monospace", 75)
 
+num_of_turns = 1
 while not game_over:
 
 	for event in pygame.event.get():
@@ -129,7 +130,7 @@ while not game_over:
 						game_over = True
 
 
-			# # Ask for Player 2 Input
+			# Ask for Player 2 Input
 			else:				
 				posx = event.pos[0]
 				col = int(math.floor(posx/SQUARESIZE))
@@ -149,6 +150,7 @@ while not game_over:
 
 			exec = end - start
 			print(f"{exec:.16f}")
+			num_of_turns+=1
 
 			# print_board(board)
 			draw_board(board)

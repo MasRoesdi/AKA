@@ -9,7 +9,7 @@ BLACK = (0,0,0)
 RED = (255,0,0)
 YELLOW = (255,255,0)
 
-ROW_COUNT = 7
+ROW_COUNT = 10
 COLUMN_COUNT = 10
 
 def create_board():
@@ -30,54 +30,47 @@ def get_next_open_row(board, col):
 # def print_board(board):
 # 	print(np.flip(board, 0))
 
-def check_move(board, piece, r, c, dr, dc, count=0):
-    """
-    Mengecek kemenangan secara rekursif.
-    :param board: Papan permainan (array 2D).
-    :param piece: Potongan yang dicari (1 atau 2).
-    :param r: Baris saat ini.
-    :param c: Kolom saat ini.
-    :param dr: Arah langkah di baris (-1, 0, 1).
-    :param dc: Arah langkah di kolom (-1, 0, 1).
-    :param count: Hitungan berturut-turut saat ini.
-    :return: True jika ditemukan 4 berturut-turut, sebaliknya False.
-    """
-    # Periksa batas papan
-    if r < 0 or c < 0 or r >= ROW_COUNT or c >= COLUMN_COUNT:
+def recursive_check(board, piece, r, c, dr, dc, count):
+    if r < 0 or r >= ROW_COUNT or c < 0 or c >= COLUMN_COUNT:
         return False
 
-    # Periksa apakah sel sesuai dengan potongan yang diinginkan
     if board[r][c] != piece:
         return False
 
-    # Tambahkan hitungan berturut-turut
     count += 1
-
-    # Jika sudah ada 4 berturut-turut
     if count == 4:
         return True
 
-    # Lanjutkan ke sel berikutnya dalam arah yang sama
-    return check_move(board, piece, r + dr, c + dc, dr, dc, count)
+    return recursive_check(board, piece, r + dr, c + dc, dr, dc, count)
 
 
-def winning_move(board, piece):
-    """
-    Memeriksa seluruh papan menggunakan fungsi rekursif.
-    :param board: Papan permainan (array 2D).
-    :param piece: Potongan yang dicari (1 atau 2).
-    :return: True jika ada kemenangan, sebaliknya False.
-    """
-    directions = [(0, 1), (1, 0), (1, 1), (1, -1)]  # Horizontal, Vertikal, Diagonal (+), Diagonal (-)
+def check_all_directions(board, piece, r, c, index=0):
+    directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+	
+    if index >= len(directions):
+        return False
 
-    for r in range(ROW_COUNT):
-        for c in range(COLUMN_COUNT):
-            if board[r][c] == piece:  # Mulai dari potongan yang sesuai
-                for dr, dc in directions:  # Periksa ke semua arah
-                    if check_move(board, piece, r, c, dr, dc):
-                        return True
+    dr, dc = directions[index]
+    if recursive_check(board, piece, r, c, dr, dc, 0):
+        return True
 
-    return False
+    return check_all_directions(board, piece, r, c, index + 1)
+
+
+def check_all_positions(board, piece, r=0, c=0):
+
+
+    if r >= ROW_COUNT:
+        return False
+
+    if c >= COLUMN_COUNT:
+        return check_all_positions(board, piece, r + 1, 0)
+
+    if board[r][c] == piece and check_all_directions(board, piece, r, c):
+        return True
+
+    return check_all_positions(board, piece, r, c + 1)
+
 
 def draw_board(board):
 	for c in range(COLUMN_COUNT):
@@ -116,6 +109,7 @@ pygame.display.update()
 
 myfont = pygame.font.SysFont("monospace", 75)
 
+num_of_turns = 1
 while not game_over:
 
 	for event in pygame.event.get():
@@ -143,13 +137,17 @@ while not game_over:
 					row = get_next_open_row(board, col)
 					drop_piece(board, row, col, 1)
 
-					if winning_move(board, 1):
+					start = time.perf_counter()
+					win = check_all_positions(board, 1)
+					end = time.perf_counter()
+
+					if win:
 						label = myfont.render("Player 1 wins!!", 1, RED)
 						screen.blit(label, (40,10))
 						game_over = True
 
 
-			# # Ask for Player 2 Input
+			# Ask for Player 2 Input
 			else:				
 				posx = event.pos[0]
 				col = int(math.floor(posx/SQUARESIZE))
@@ -158,10 +156,18 @@ while not game_over:
 					row = get_next_open_row(board, col)
 					drop_piece(board, row, col, 2)
 
-					if winning_move(board, 2):
+					start = time.perf_counter()
+					win = check_all_positions(board, 2)
+					end = time.perf_counter()
+
+					if win:
 						label = myfont.render("Player 2 wins!!", 1, YELLOW)
 						screen.blit(label, (40,10))
 						game_over = True
+
+			exec = end - start
+			print(f"{exec:.16f}")
+			num_of_turns+=1
 
 			# print_board(board)
 			draw_board(board)
